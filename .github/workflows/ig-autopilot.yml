@@ -35,6 +35,9 @@ jobs:
           IG_USER_ID:      ${{ secrets.IG_USER_ID }}
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
           IMG_BASE_URL:    ${{ secrets.IMG_BASE_URL }}
+          IG_GRAPH_BASE:   ${{ secrets.IG_GRAPH_BASE }}
+          FB_PAGE_ID:      ${{ secrets.FB_PAGE_ID }}
+          FB_PAGE_TOKEN:   ${{ secrets.FB_PAGE_TOKEN }}
           DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '' }}
         run: python ig_poster.py
       - name: Persist state (ig-posted.json)
