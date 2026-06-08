@@ -30,7 +30,10 @@ STATE_PATH = os.path.join(BASE, "ig-posted.json")
 TZ = ZoneInfo("Europe/Berlin")
 WINDOW = timedelta(minutes=int(os.environ.get("WINDOW_MIN", "90")))
 DRY = os.environ.get("DRY_RUN") == "1"
-GRAPH = "https://graph.facebook.com/v21.0"
+# Weg-unabhaengig: Facebook-Login (Standard) ODER Instagram-Login via Secret IG_GRAPH_BASE.
+#   Weg A (Facebook): https://graph.facebook.com/v21.0  (Default)
+#   Weg B (Instagram): https://graph.instagram.com/v21.0
+GRAPH = os.environ.get("IG_GRAPH_BASE", "https://graph.facebook.com/v21.0").rstrip("/")
 
 def log(*a): print("[ig-poster]", *a, flush=True)
 
