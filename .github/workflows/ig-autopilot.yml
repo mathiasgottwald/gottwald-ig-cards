@@ -1,0 +1,50 @@
+name: IG-Autopilot (@gottwald.world)
+
+# Postet geplante IG-Posts (Single + Karussell) automatisch zur Zeit via Meta Graph API.
+# Cron alle 10 Min, Fenster 90 Min. Bilder = JPEGs in diesem Repo (GitHub Pages = IMG_BASE_URL).
+# Idle, bis die 3 Secrets gesetzt sind: IG_USER_ID, IG_ACCESS_TOKEN, IMG_BASE_URL.
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Trockenlauf (nichts senden)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ig-autopilot
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - name: Run poster
+        env:
+          IG_USER_ID:      ${{ secrets.IG_USER_ID }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          IMG_BASE_URL:    ${{ secrets.IMG_BASE_URL }}
+          DRY_RUN: ${{ github.event.inputs.dry_run == 'true' && '1' || '' }}
+        run: python ig_poster.py
+      - name: Persist state (ig-posted.json)
+        run: |
+          if ! git diff --quiet -- ig-posted.json; then
+            git config user.name "ig-autopilot"
+            git config user.email "bot@users.noreply.github.com"
+            git add ig-posted.json
+            git commit -m "chore: update ig-posted.json [skip ci]"
+            git push
+          else
+            echo "no state change"
+          fi
