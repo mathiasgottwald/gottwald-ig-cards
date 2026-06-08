@@ -34,6 +34,8 @@ DRY = os.environ.get("DRY_RUN") == "1"
 #   Weg A (Facebook): https://graph.facebook.com/v21.0  (Default)
 #   Weg B (Instagram): https://graph.instagram.com/v21.0
 GRAPH = os.environ.get("IG_GRAPH_BASE", "https://graph.facebook.com/v21.0").rstrip("/")
+# Facebook-Seite (optional, additiv): nutzt IMMER graph.facebook.com. Aktiv, wenn FB_PAGE_ID + FB_PAGE_TOKEN gesetzt.
+FB_BASE = os.environ.get("FB_GRAPH_BASE", "https://graph.facebook.com/v21.0").rstrip("/")
 
 def log(*a): print("[ig-poster]", *a, flush=True)
 
@@ -109,6 +111,20 @@ def post_one(ig_id, token, base, r):
         cid = create_container(ig_id, token, base, files[0], caption=caption)
         return publish(ig_id, token, cid)
 
+def post_facebook(page_id, token, base, files, caption):
+    """Postet auf eine Facebook-Seite (1 Bild ODER Mehrbild-Feed-Post). Immer graph.facebook.com."""
+    if len(files) == 1:
+        return _post(f"{FB_BASE}/{page_id}/photos",
+                     {"url": img_url(base, files[0]), "caption": caption, "access_token": token})["id"]
+    media = []
+    for f in files:  # mehrere Bilder: erst unveroeffentlicht hochladen, dann als Feed-Post buendeln
+        pid = _post(f"{FB_BASE}/{page_id}/photos",
+                    {"url": img_url(base, f), "published": "false", "access_token": token})["id"]
+        media.append({"media_fbid": pid})
+    return _post(f"{FB_BASE}/{page_id}/feed",
+                 {"message": caption, "attached_media": json.dumps(media), "access_token": token})["id"]
+
+
 def main():
     now = datetime.now(TZ)
     done = load_state()
@@ -118,19 +134,30 @@ def main():
     ig_id = os.environ.get("IG_USER_ID", "")
     token = os.environ.get("IG_ACCESS_TOKEN", "")
     base = os.environ.get("IMG_BASE_URL", "")
+    fb_page = os.environ.get("FB_PAGE_ID", "")
+    fb_token = os.environ.get("FB_PAGE_TOKEN", "")
+    fb_on = bool(fb_page and fb_token)
     if not DRY and not (ig_id and token and base):
         log("WARTET auf Secrets (IG_USER_ID / IG_ACCESS_TOKEN / IMG_BASE_URL) — idle, nichts gepostet.")
         return 0  # sauberes Idle (kein roter Fehllauf), bis Mathias die Secrets setzt
+    log("Facebook-Seite:", "AKTIV" if fb_on else "aus (FB_PAGE_ID/FB_PAGE_TOKEN nicht gesetzt)")
     for key, sched, r in rows:
+        files = [x.strip() for x in r["files"].split(";") if x.strip()]
         if DRY:
-            log("DRY would post:", key, r["type"], "->", r["files"], "|", r["caption"][:50].replace("\n", " "), "...")
+            log("DRY would post:", key, r["type"], "-> IG" + (" + FB" if fb_on else ""), "|", r["files"])
             done.add(key); continue
         try:
             mid = post_one(ig_id, token, base, r)
-            log("GEPOSTET:", key, "media", mid)
+            log("IG GEPOSTET:", key, "media", mid)
             done.add(key)
         except Exception as e:
-            log("FEHLER beim Posten", key, ":", e)  # nicht als done -> naechster Lauf versucht erneut
+            log("FEHLER beim IG-Posten", key, ":", e)  # nicht als done -> naechster Lauf versucht erneut
+        if fb_on:  # Facebook = best effort, blockiert IG nicht
+            try:
+                fid = post_facebook(fb_page, fb_token, base, files, r["caption"])
+                log("FB GEPOSTET:", key, "post", fid)
+            except Exception as e:
+                log("FB-Fehler (best effort, kein Retry):", key, e)
     save_state(done)
     return 0
 
