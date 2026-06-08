@@ -1,49 +1,26 @@
-name: Token Setup (einmalig)
-
+name: Token Setup
 on:
   workflow_dispatch:
       inputs:
             ig_code:
-                    description: 'Instagram OAuth Code (aus der Redirect-URL)'
+                    description: 'OAuth Code'
                             required: true
                                     type: string
-
                                     jobs:
                                       get-token:
                                           runs-on: ubuntu-latest
-                                              permissions:
-                                                    contents: read
-                                                          id-token: write
-                                                              steps:
-                                                                    - name: Kurzlebigen Token holen
-                                                                            id: short_token
-                                                                                    run: |
-                                                                                              RESPONSE=$(curl -s -X POST https://api.instagram.com/oauth/access_token \
-                                                                                                          -F client_id=1337870704964499 \
-                                                                                                                      -F client_secret=87168eb2ce7950dcd84d69faf8f43c08 \
-                                                                                                                                  -F grant_type=authorization_code \
-                                                                                                                                              -F redirect_uri=https://mathiasgottwald.github.io/gottwald-ig-cards/ \
-                                                                                                                                                          -F code=${{ github.event.inputs.ig_code }})
-                                                                                                                                                                    echo "Response: $RESPONSE"
-                                                                                                                                                                              SHORT_TOKEN=$(echo $RESPONSE | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['access_token'])")
-                                                                                                                                                                                        USER_ID=$(echo $RESPONSE | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['user_id'])")
-                                                                                                                                                                                                  echo "short_token=$SHORT_TOKEN" >> $GITHUB_OUTPUT
-                                                                                                                                                                                                            echo "user_id=$USER_ID" >> $GITHUB_OUTPUT
-                                                                                                                                                                                                                      echo "User ID: $USER_ID"
-                                                                                                                                                                                                                      
-                                                                                                                                                                                                                            - name: Langlebigen Token holen (60 Tage)
-                                                                                                                                                                                                                                    id: long_token
-                                                                                                                                                                                                                                            run: |
-                                                                                                                                                                                                                                                      RESPONSE=$(curl -s "https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=87168eb2ce7950dcd84d69faf8f43c08&access_token=${{ steps.short_token.outputs.short_token }}")
-                                                                                                                                                                                                                                                                echo "Response: $RESPONSE"
-                                                                                                                                                                                                                                                                          LONG_TOKEN=$(echo $RESPONSE | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['access_token'])")
-                                                                                                                                                                                                                                                                                    echo "long_token=$LONG_TOKEN" >> $GITHUB_OUTPUT
-                                                                                                                                                                                                                                                                                    
-                                                                                                                                                                                                                                                                                          - name: Secrets setzen via GitHub CLI
-                                                                                                                                                                                                                                                                                                  env:
-                                                                                                                                                                                                                                                                                                            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                                                                                                                                                                                                                                                                                                                    run: |
-                                                                                                                                                                                                                                                                                                                              echo "${{ steps.long_token.outputs.long_token }}" | gh secret set IG_ACCESS_TOKEN --repo mathiasgottwald/gottwald-ig-cards
-                                                                                                                                                                                                                                                                                                                                        echo "${{ steps.short_token.outputs.user_id }}" | gh secret set IG_USER_ID --repo mathiasgottwald/gottwald-ig-cards
-                                                                                                                                                                                                                                                                                                                                                  echo "Secrets erfolgreich gesetzt!"
-                                                                                                                                                                                                                                                                                                                                                            echo "IG_USER_ID=${{ steps.short_token.outputs.user_id }}"
+                                              steps:
+                                                    - name: Get tokens and set secrets
+                                                            env:
+                                                                      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                                                                              run: |
+                                                                                        RESP=$(curl -s -X POST https://api.instagram.com/oauth/access_token -F client_id=1337870704964499 -F client_secret=87168eb2ce7950dcd84d69faf8f43c08 -F grant_type=authorization_code -F redirect_uri=https://mathiasgottwald.github.io/gottwald-ig-cards/ -F "code=${{ github.event.inputs.ig_code }}")
+                                                                                                  echo "$RESP"
+                                                                                                            SHORT=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['access_token'])")
+                                                                                                                      UID=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['user_id'])")
+                                                                                                                                RESP2=$(curl -s "https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=87168eb2ce7950dcd84d69faf8f43c08&access_token=$SHORT")
+                                                                                                                                          echo "$RESP2"
+                                                                                                                                                    LONG=$(echo "$RESP2" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['access_token'])")
+                                                                                                                                                              printf '%s' "$LONG" | gh secret set IG_ACCESS_TOKEN --repo mathiasgottwald/gottwald-ig-cards
+                                                                                                                                                                        printf '%s' "$UID" | gh secret set IG_USER_ID --repo mathiasgottwald/gottwald-ig-cards
+                                                                                                                                                                                  echo "DONE IG_USER_ID=$UID"
