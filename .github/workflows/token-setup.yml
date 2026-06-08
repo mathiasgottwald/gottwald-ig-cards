@@ -1,0 +1,41 @@
+name: Token Setup (IG)
+
+on:
+  workflow_dispatch:
+    inputs:
+      CODE:
+        description: 'OAuth code from Instagram redirect URL'
+        required: true
+      APP_SECRET:
+        description: 'Instagram App Secret (new)'
+        required: true
+
+jobs:
+  get-token:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Exchange code for short-lived token
+        id: short
+        run: |
+          RESPONSE=$(curl -s -X POST "https://api.instagram.com/oauth/access_token" \
+            -d "client_id=1337870704964499" \
+            -d "client_secret=${{ github.event.inputs.APP_SECRET }}" \
+            -d "grant_type=authorization_code" \
+            -d "redirect_uri=https://mathiasgottwald.github.io/gottwald-ig-cards/" \
+            -d "code=${{ github.event.inputs.CODE }}")
+          echo "RESPONSE_SHORT=$RESPONSE" >> $GITHUB_OUTPUT
+          SHORT_TOKEN=$(echo $RESPONSE | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('access_token','ERROR'))")
+          USER_ID=$(echo $RESPONSE | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('user_id','ERROR'))")
+          echo "SHORT_TOKEN=$SHORT_TOKEN" >> $GITHUB_OUTPUT
+          echo "USER_ID=$USER_ID" >> $GITHUB_OUTPUT
+          echo "user_id=$USER_ID"
+      - name: Exchange for long-lived token
+        id: long
+        run: |
+          RESPONSE=$(curl -s "https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${{ github.event.inputs.APP_SECRET }}&access_token=${{ steps.short.outputs.SHORT_TOKEN }}")
+          echo "RESPONSE_LONG=$RESPONSE" >> $GITHUB_OUTPUT
+          LONG_TOKEN=$(echo $RESPONSE | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('access_token','ERROR'))")
+          EXPIRES=$(echo $RESPONSE | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('expires_in','ERROR'))")
+          echo "LONG_TOKEN=$LONG_TOKEN" >> $GITHUB_OUTPUT
+          echo "expires_in=$EXPIRES"
+          echo "long_token_obtained=yes"
