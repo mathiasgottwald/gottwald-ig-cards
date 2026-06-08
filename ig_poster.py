@@ -128,19 +128,20 @@ def post_facebook(page_id, token, base, files, caption):
 def main():
     now = datetime.now(TZ)
     done = load_state()
-    rows = due_rows(now, done)
-    if not rows:
-        log("nichts faellig um", now.strftime("%Y-%m-%d %H:%M %Z")); save_state(done); return 0
     ig_id = os.environ.get("IG_USER_ID", "")
     token = os.environ.get("IG_ACCESS_TOKEN", "")
     base = os.environ.get("IMG_BASE_URL", "")
     fb_page = os.environ.get("FB_PAGE_ID", "")
     fb_token = os.environ.get("FB_PAGE_TOKEN", "")
     fb_on = bool(fb_page and fb_token)
-    if not DRY and not (ig_id and token and base):
+    ig_ok = bool(ig_id and token and base)
+    log(f"Config: Instagram {'OK' if ig_ok else 'FEHLT'} (API {GRAPH}) | Facebook {'AKTIV' if fb_on else 'aus'}")
+    rows = due_rows(now, done)
+    if not rows:
+        log("nichts faellig um", now.strftime("%Y-%m-%d %H:%M %Z")); save_state(done); return 0
+    if not DRY and not ig_ok:
         log("WARTET auf Secrets (IG_USER_ID / IG_ACCESS_TOKEN / IMG_BASE_URL) — idle, nichts gepostet.")
-        return 0  # sauberes Idle (kein roter Fehllauf), bis Mathias die Secrets setzt
-    log("Facebook-Seite:", "AKTIV" if fb_on else "aus (FB_PAGE_ID/FB_PAGE_TOKEN nicht gesetzt)")
+        return 0  # sauberes Idle (kein roter Fehllauf), bis Secrets gesetzt
     for key, sched, r in rows:
         files = [x.strip() for x in r["files"].split(";") if x.strip()]
         if DRY:
