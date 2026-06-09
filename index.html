@@ -1,0 +1,32 @@
+<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GOTT WALD — Authorisierung</title><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Helvetica Neue",Arial,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;
+ background:radial-gradient(120% 120% at 50% 8%,#1c1e24 0%,#121419 50%,#0a0b0d 100%);color:#F4F1EA;padding:24px}
+.card{max-width:680px;width:100%;text-align:center;border:1px solid rgba(244,241,234,.10);border-radius:16px;padding:40px 32px;position:relative}
+.card::before{content:"";position:absolute;top:-1px;left:50%;transform:translateX(-50%);border-top:2px solid #C9A24B;width:140px}
+.k{font-size:13px;letter-spacing:.34em;color:#8A8D94;text-transform:uppercase;margin-bottom:18px}
+h1{font-family:Georgia,serif;font-size:30px;margin-bottom:10px}
+.sub{color:#9FB1BE;font-size:15px;margin-bottom:24px}
+.codebox{background:#0a0b0d;border:1px solid #C9A24B;border-radius:10px;padding:16px;font-family:ui-monospace,Menlo,monospace;
+ font-size:15px;word-break:break-all;color:#4FB0BC;margin-bottom:16px;user-select:all}
+button{background:#C9A24B;color:#0a0b0d;border:0;border-radius:999px;padding:13px 28px;font-size:15px;font-weight:700;cursor:pointer}
+.hint{color:#8A8D94;font-size:13px;margin-top:18px;line-height:1.5}
+.none{color:#9FB1BE;font-size:16px}
+</style></head><body>
+<div class="card">
+<div class="k">GOTT&nbsp;WALD&nbsp;&middot;&nbsp;AUTHORISIERUNG</div>
+<div id="out"></div>
+</div>
+<script>
+var p=new URLSearchParams(location.search);
+var code=(p.get("code")||"").replace(/#_$/,"").replace(/#.*$/,"");
+var out=document.getElementById("out");
+if(code){
+ out.innerHTML='<h1>✅ Autorisierung erfolgreich</h1><div class="sub">Dein Code — ins Terminal-Skript bei „IG-OAuth-Code" einf&uuml;gen:</div>'
+ +'<div class="codebox" id="c">'+code+'</div><button onclick="navigator.clipboard.writeText(document.getElementById(\'c\').innerText);this.innerText=\'Kopiert ✓\'">Code kopieren</button>'
+ +'<div class="hint">Diesen Code im Terminal beim Skript fix_tokens.sh eingeben. Code ist nur kurz g&uuml;ltig — z&uuml;gig verwenden.</div>';
+}else{
+ out.innerHTML='<h1>Gottwald.World</h1><div class="none">KI ohne Hype. Substanz statt Glanz.<br><br>Diese Seite f&auml;ngt den Autorisierungs-Code ab. &Uuml;ber den Instagram-Login-Link &ouml;ffnen.</div>';
+}
+</script></body></html>
