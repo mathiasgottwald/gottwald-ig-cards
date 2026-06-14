@@ -59,11 +59,17 @@ def due_rows(now, done):
                 sched = datetime.strptime(f"{r['date']} {r['time_CET']}", "%Y-%m-%d %H:%M").replace(tzinfo=TZ)
             except Exception as e:
                 log("bad row", key, e); continue
-            if sched <= now <= sched + WINDOW:
+            if now < sched:
+                continue  # noch nicht faellig -> bei einem spaeteren Lauf posten
+            if now.date() == sched.date():
+                # Faellig und selber Tag: posten, AUCH wenn der GitHub-Cron Stunden
+                # zu spaet kommt (Free-Tier-Cron ist unzuverlaessig). Lieber spaet als nie.
                 out.append((key, sched, r))
-            elif now > sched + WINDOW:
-                log("SKIP (zu spaet, ausserhalb Fenster):", key)
-                done.add(key)  # nicht nachfeuern (kein Spam)
+            else:
+                # Tag ist vorbei und nie gepostet -> verfallen lassen (kein stale Post am
+                # Folgetag), aber EHRLICH loggen statt faelschlich als Erfolg zu buchen.
+                log("VERFALLEN (Tag vorbei, nie gepostet):", key)
+                done.add(key)
     return out
 
 def _post(url, params, tries=3):
