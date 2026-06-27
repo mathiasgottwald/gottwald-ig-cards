@@ -104,6 +104,28 @@ def publish(ig_id, token, creation_id):
             last = e; log("publish noch nicht bereit, warte…", i + 1); time.sleep(5 * (i + 1))
     raise RuntimeError(f"publish fehlgeschlagen: {last}")
 
+def create_reel_container(ig_id, token, base, fname, caption):
+    """Reel/Video-Container: Graph zieht die mp4 ueber die oeffentliche video_url."""
+    p = {"media_type": "REELS", "video_url": img_url(base, fname),
+         "caption": caption, "share_to_feed": "true", "access_token": token}
+    return _post(f"{GRAPH}/{ig_id}/media", p)["id"]
+
+def wait_container_ready(token, cid, max_wait=300):
+    """Video-Container wird asynchron verarbeitet -> bis FINISHED pollen, dann erst publishen."""
+    import requests
+    waited = 0
+    while waited < max_wait:
+        resp = requests.get(f"{GRAPH}/{cid}",
+                            params={"fields": "status_code,status", "access_token": token}, timeout=60)
+        sc = (resp.json() or {}).get("status_code")
+        log("reel-container status:", sc)
+        if sc == "FINISHED":
+            return True
+        if sc == "ERROR":
+            raise RuntimeError(f"reel-container ERROR: {resp.text[:300]}")
+        time.sleep(10); waited += 10
+    raise RuntimeError("reel-container timeout (>%ds nicht FINISHED)" % max_wait)
+
 def post_one(ig_id, token, base, r):
     files = [x.strip() for x in r["files"].split(";") if x.strip()]
     caption = r["caption"]
@@ -113,6 +135,10 @@ def post_one(ig_id, token, base, r):
             "media_type": "CAROUSEL", "children": ",".join(children),
             "caption": caption, "access_token": token})["id"]
         return publish(ig_id, token, parent)
+    elif r["type"] == "reel":
+        cid = create_reel_container(ig_id, token, base, files[0], caption)
+        wait_container_ready(token, cid)
+        return publish(ig_id, token, cid)
     else:
         cid = create_container(ig_id, token, base, files[0], caption=caption)
         return publish(ig_id, token, cid)
@@ -159,7 +185,7 @@ def main():
             done.add(key)
         except Exception as e:
             log("FEHLER beim IG-Posten", key, ":", e)  # nicht als done -> naechster Lauf versucht erneut
-        if fb_on:  # Facebook = best effort, blockiert IG nicht
+        if fb_on and r["type"] != "reel":  # Facebook = best effort; Reel-mp4 nicht auf FB-Foto-Endpoint
             try:
                 fid = post_facebook(fb_page, fb_token, base, files, r["caption"])
                 log("FB GEPOSTET:", key, "post", fid)
