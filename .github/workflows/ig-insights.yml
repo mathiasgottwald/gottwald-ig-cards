@@ -1,0 +1,44 @@
+name: IG-Messung (@gottwald.world)
+
+# Liest echte Reichweite/Saves/Shares je Post direkt bei Meta — unabhaengig von Buffer.
+# Grund (23.07.2026): Buffer zeigt Posts erst >24h spaeter und trennt keine Formate.
+# Der Reel-vs-Karussell-Test braucht per-Post-Reach am Folgetag.
+# Taeglich 06:20 UTC (= 08:20 CEST, vor dem insta-Lauf) + manuell ausloesbar.
+
+on:
+  schedule:
+    - cron: "20 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ig-insights
+  cancel-in-progress: false
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run measurement
+        env:
+          IG_USER_ID:      ${{ secrets.IG_USER_ID }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          IG_GRAPH_BASE:   ${{ secrets.IG_GRAPH_BASE }}
+        run: python ig_insights.py
+      - name: Persist history (ig-insights.json)
+        run: |
+          if ! git diff --quiet -- ig-insights.json; then
+            git config user.name "ig-insights"
+            git config user.email "bot@users.noreply.github.com"
+            git add ig-insights.json
+            git commit -m "chore: update ig-insights.json [skip ci]"
+            git push
+          else
+            echo "no change"
+          fi
