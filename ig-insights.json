@@ -949,5 +949,74 @@
       }
     ],
     "fehler": []
+  },
+  {
+    "gemessen_am": "2026-07-28T09:05:03+00:00",
+    "account": {
+      "username": "patronosai",
+      "followers_count": 4779,
+      "follows_count": 29,
+      "media_count": 4,
+      "id": "27001645702820695"
+    },
+    "posts": [
+      {
+        "id": "18002160536775606",
+        "zeit": "2026-07-19T11:46:02+0000",
+        "format": "FEED",
+        "permalink": "https://www.instagram.com/p/Da-Siaum03j/",
+        "likes": 0,
+        "kommentare": 0,
+        "reach": 9,
+        "saved": 0,
+        "shares": 0,
+        "total_interactions": 0,
+        "views": 17,
+        "profile_visits": 0
+      },
+      {
+        "id": "17984266971019890",
+        "zeit": "2026-07-18T09:49:15+0000",
+        "format": "FEED",
+        "permalink": "https://www.instagram.com/p/Da7gYP1m9cV/",
+        "likes": 0,
+        "kommentare": 0,
+        "reach": 4,
+        "saved": 0,
+        "shares": 0,
+        "total_interactions": 0,
+        "views": 5,
+        "profile_visits": 0
+      },
+      {
+        "id": "17960003769140010",
+        "zeit": "2026-06-16T17:37:20+0000",
+        "format": "FEED",
+        "permalink": "https://www.instagram.com/p/DZp8gjSlF4q/",
+        "likes": 0,
+        "kommentare": 0,
+        "reach": 4,
+        "saved": 0,
+        "shares": 0,
+        "total_interactions": 0,
+        "views": 13,
+        "profile_visits": 0
+      },
+      {
+        "id": "18093836819262153",
+        "zeit": "2026-06-14T16:10:08+0000",
+        "format": "FEED",
+        "permalink": "https://www.instagram.com/p/DZko8DmHKBd/",
+        "likes": 0,
+        "kommentare": 0,
+        "reach": 7,
+        "saved": 0,
+        "shares": 0,
+        "total_interactions": 0,
+        "views": 8,
+        "profile_visits": 0
+      }
+    ],
+    "fehler": []
   }
 ]
