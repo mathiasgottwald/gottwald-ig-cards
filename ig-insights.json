@@ -1,14 +1,5 @@
 [
   {
-    "gemessen_am": "2026-08-10T08:04:19+00:00",
-    "account": {},
-    "posts": [],
-    "fehler": [
-      "account: Error validating access token: Session has expired on Sunday, 09-Aug-26 03:56:27 PDT. The current time is Monday, 10-Aug-26 01:04:19 PDT.",
-      "media: Error validating access token: Session has expired on Sunday, 09-Aug-26 03:56:27 PDT. The current time is Monday, 10-Aug-26 01:04:19 PDT."
-    ]
-  },
-  {
     "gemessen_am": "2026-08-11T07:37:39+00:00",
     "account": {},
     "posts": [],
@@ -532,6 +523,15 @@
   },
   {
     "gemessen_am": "2026-10-22T11:53:23+00:00",
+    "account": {},
+    "posts": [],
+    "fehler": [
+      "account: Error validating access token: The session has been invalidated because the user changed their password or Facebook has changed the session for security reasons.",
+      "media: Error validating access token: The session has been invalidated because the user changed their password or Facebook has changed the session for security reasons."
+    ]
+  },
+  {
+    "gemessen_am": "2026-10-23T11:39:49+00:00",
     "account": {},
     "posts": [],
     "fehler": [
